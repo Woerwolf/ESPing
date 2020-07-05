@@ -42,19 +42,17 @@
 // defined in webserver.h
 // enum modes {TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
 // enum backgrounds {RAINBOW, STATIC};
-long colorBG = 0x000000;
+long colorBG = 0x00bbbb;
 long colorFG = 0xffffff;
 int activeMode = TIME;
-int activeBackground = RAINBOW;
+int activeBackground = STATIC;
 
 Ticker blinkerSeconds;
 
 const char* ssid = SSID;
 const char* password = PW;
 
-CRGB leds[ledQuantity];
-CRGB* display[ledRows][ledColumns];
-int lastTimeShown = -1;
+NeoPixelBus<NeoRgbFeature, NeoEsp8266Uart1800KbpsMethod> strip(ledQuantity, dataPin);
 
 const int utcOffsetInSeconds = 7200;
 WiFiUDP ntpUDP;
@@ -157,7 +155,7 @@ void setup() {
   #endif
 
 
-  blinkerSeconds.attach(0.07, handleTimerInterrupt);
+  // blinkerSeconds.attach(0.1, handleTimerInterrupt);
 }
 
 void loop() {
@@ -169,10 +167,7 @@ void loop() {
 
   switch(activeMode){
     case TIME: 
-                if((timeClient.getMinutes()+60 - lastTimeUpdate)%60 > 10){
-                  timeClient.forceUpdate();  
-                  lastTimeUpdate = timeClient.getMinutes();
-                }
+                timeClient.update();  
                 break;
     case WEATHER:
                 handleWeatherData();
@@ -184,10 +179,37 @@ void loop() {
                 break;
   }
 
+  switch(activeBackground){
+    case RAINBOW: 
+                  rainbowbg(0.15, 170);
+                  break;
+    case STATIC:
+                  staticbg(colorBG);
+                  break;
+    default:      
+                  staticbg(0x000000);
+                  break;
+  }
+  
+  switch(activeMode){
+    case TIME: 
+                writeTime(timeClient.getHours(), timeClient.getMinutes(), 0xffffff);
+                break;
+    case WEATHER:
+                writeTemp(temperature, 0xffffff);
+                break;
+    case BRAWLSTARS:
+                if(brawlResult == NULL) break;
+                writeNumber(atoi(getComponentFromJson(brawlResult, "trophies", "{")), 0xffffff);
+                break;
+    default:
+                break;
+  }
+
   handleOTA();
   handleTelnet();
 
   server.handleClient();
 
-  delay(300);
+  delay(30);
 }

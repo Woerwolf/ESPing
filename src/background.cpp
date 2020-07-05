@@ -11,8 +11,8 @@ void rainbowbg(float speed, int brightness){
     for(int col = 0; col<ledColumns; col++){
         unsigned int hue = (baseHue+col*10)%256;
         for(int row = 0; row<ledRows; row++){
-            if(display[row][col] != NULL){
-                *display[row][col] = CHSV(hue, 255, brightness);
+            if(mapToStrip(row, col) != -1){
+                strip.SetPixelColor(mapToStrip(row, col), HsbColor(hue, 255, brightness));
             }
         }
     }
@@ -21,8 +21,8 @@ void rainbowbg(float speed, int brightness){
 void staticbg(long color){
     for(int col = 0; col<ledColumns; col++){
         for(int row = 0; row<ledRows; row++){
-            if(display[row][col] != NULL){
-                *display[row][col] = color;
+            if(mapToStrip(row, col) != -1){
+                strip.SetPixelColor(mapToStrip(row, col), color);
             }
         }
     }

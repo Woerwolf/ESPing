@@ -1,15 +1,14 @@
-#include <FastLED.h>
+#include <NeoPixelBus.h>
 
 #define ledQuantity 150
 #define ledRows 7
 #define ledColumns 22
 #define dataPin 2
 
-extern CRGB leds[ledQuantity];
-extern CRGB* display[ledRows][ledColumns];
+extern NeoPixelBus<NeoRgbFeature, NeoEsp8266Uart1800KbpsMethod> strip;
 extern int lastTimeShown;
 
-void testLed();
+int mapToStrip(int row, int col);
 void setupLED();
 void writeDigit(int number, int row, int column, long color);
 void writeNumber(unsigned int number, long color);

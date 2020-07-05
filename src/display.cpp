@@ -5,82 +5,93 @@
 
 // #define DEBUGGING 1
 
-
-void setupLED(){
-    LEDS.addLeds<WS2812, dataPin, GRB>(leds,ledQuantity);
-    // FastLED.setMaxRefreshRate( 10 );
-
-
+// this function gets the position of the desired led as input (row & column) and returns the index of it on the strip
+int mapToStrip(int row, int col){
     const int amountOfCompleteColumns = 16;
 
     // set short columns on the left (4,5,6)
     // left column with 4 leds
-    display[3][0] = &leds[1];
-    display[4][0] = &leds[0];
-    display[5][0] = &leds[8];
-    display[6][0] = &leds[9];
+    if(col == 0){
+        if(row == 3) return 1;
+        if(row == 4) return 0;
+        if(row == 5) return 8;
+        if(row == 6) return 9;
+    }
 
     // left column with 5 leds
-    display[2][1] = &leds[2];
-    display[3][1] = &leds[6];
-    display[4][1] = &leds[7];
-    display[5][1] = &leds[11];
-    display[6][1] = &leds[10];
+    if(col == 1){
+        if(row == 2) return 2;
+        if(row == 3) return 6;
+        if(row == 4) return 7;
+        if(row == 5) return 11;
+        if(row == 6) return 10;
+    }
 
     // left column with 6 leds
-    display[1][2] = &leds[4];
-    display[2][2] = &leds[5];
-    display[3][2] = &leds[13];
-    display[4][2] = &leds[12];
-    display[5][2] = &leds[22];
-    display[6][2] = &leds[23];
+    if(col == 2){
+        if(row == 1) return 4;
+        if(row == 2) return 5;
+        if(row == 3) return 13;
+        if(row == 4) return 12;
+        if(row == 5) return 22;
+        if(row == 6) return 23;
+    }
 
 
     // all columns with 7 leds
-    for(int column = 3; column<amountOfCompleteColumns+3; column++){
-        if(column%2 == 1){
-            display[0][column] = &leds[3+(7*(column-3))];
-            display[1][column] = &leds[15+(7*(column-3))];
-            display[2][column] = &leds[14+(7*(column-3))];
-            display[3][column] = &leds[20+(7*(column-3))];
-            display[4][column] = &leds[21+(7*(column-3))];
-            display[5][column] = &leds[25+(7*(column-3))];
-            display[6][column] = &leds[24+(7*(column-3))];
+    if(col>=3 && col<amountOfCompleteColumns+3){
+        if(col%2 == 1){
+            if(row == 0) return 3+(7*(col-3));
+            if(row == 1) return 15+(7*(col-3));
+            if(row == 2) return 14+(7*(col-3));
+            if(row == 3) return 20+(7*(col-3));
+            if(row == 4) return 21+(7*(col-3));
+            if(row == 5) return 25+(7*(col-3));
+            if(row == 6) return 24+(7*(col-3));
         }else{
-            display[0][column] = &leds[16+(7*(column-4))];
-            display[1][column] = &leds[18+(7*(column-4))];
-            display[2][column] = &leds[19+(7*(column-4))];
-            display[3][column] = &leds[27+(7*(column-4))];
-            display[4][column] = &leds[26+(7*(column-4))];
-            display[5][column] = &leds[36+(7*(column-4))];
-            display[6][column] = &leds[37+(7*(column-4))];
+            if(row == 0) return 16+(7*(col-4));
+            if(row == 1) return 18+(7*(col-4));
+            if(row == 2) return 19+(7*(col-4));
+            if(row == 3) return 27+(7*(col-4));
+            if(row == 4) return 26+(7*(col-4));
+            if(row == 5) return 36+(7*(col-4));
+            if(row == 6) return 37+(7*(col-4));
         }
     }
 
     // right column with 4 leds
-    display[0][amountOfCompleteColumns+5] = &leds[129];
-    display[1][amountOfCompleteColumns+5] = &leds[140];
-    display[2][amountOfCompleteColumns+5] = &leds[139];
-    display[3][amountOfCompleteColumns+5] = &leds[141];
+    if(col == amountOfCompleteColumns+5){
+        if(row == 0) return 129;
+        if(row == 1) return 140;
+        if(row == 2) return 139;
+        if(row == 3) return 141;
+    }
 
     // right column with 5 leds
-    display[0][amountOfCompleteColumns+4] = &leds[128];
-    display[1][amountOfCompleteColumns+4] = &leds[130];
-    display[2][amountOfCompleteColumns+4] = &leds[131];
-    display[3][amountOfCompleteColumns+4] = &leds[138];
-    display[4][amountOfCompleteColumns+4] = &leds[137];
+    if(col == amountOfCompleteColumns+4){
+        if(row == 0) return 128;
+        if(row == 1) return 130;
+        if(row == 2) return 131;
+        if(row == 3) return 138;
+        if(row == 4) return 137;
+    }
 
     // right column with 6 leds
-    display[0][amountOfCompleteColumns+3] = &leds[115];
-    display[1][amountOfCompleteColumns+3] = &leds[127];
-    display[2][amountOfCompleteColumns+3] = &leds[126];
-    display[3][amountOfCompleteColumns+3] = &leds[132];
-    display[4][amountOfCompleteColumns+3] = &leds[133];
-    display[5][amountOfCompleteColumns+3] = &leds[136];
+    if(col == amountOfCompleteColumns+3){
+        if(row == 0) return 115;
+        if(row == 1) return 127;
+        if(row == 2) return 126;
+        if(row == 3) return 132;
+        if(row == 4) return 133;
+        if(row == 5) return 136;
+    }
 
+    return -1;
+}
 
-    // set full brightness
-	LEDS.setBrightness(255);
+void setupLED(){
+    strip.Begin();
+    strip.Show();
 }
 
 // input row and column specify the ball where the number will appear
@@ -94,7 +105,7 @@ void writeDigit(int number, int row, int column, long color){
     }
 
     // check if position is invalid (out of field)
-    if(display[row-1][column-1] == NULL || display[row-1][column+2] == NULL || display[row+3][column-1] == NULL || display[row+3][column-2] == NULL){
+    if(mapToStrip(row-1, column-1) == -1 || mapToStrip(row-1, column+2) == -1 || mapToStrip(row+3, column-1) == -1 || mapToStrip(row+3, column-2) == -1){
         #if defined(DEBUGGING)
         Telnet.println("Invalid place for number!");
         #endif
@@ -104,83 +115,85 @@ void writeDigit(int number, int row, int column, long color){
     switch (number)
     {
     case 0:
-        *display[row][column-1] = color;
-        *display[row-1][column] = color;
-        *display[row-1][column+1] = color;
-        *display[row][column+1] = color;
-        *display[row+2][column-2] = color;
-        *display[row+3][column-2] = color;
-        *display[row+3][column-1] = color;
-        *display[row+2][column] = color;
+        strip.SetPixelColor(mapToStrip(row, column-1), color);
+        strip.SetPixelColor(mapToStrip(row-1, column), color);
+        strip.SetPixelColor(mapToStrip(row-1, column+1), color);
+        strip.SetPixelColor(mapToStrip(row, column+1), color);
+        strip.SetPixelColor(mapToStrip(row+2, column-2), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-2), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+2, column), color);
         break;
 
     case 2:
-        *display[row-1][column] = color;
-        *display[row-1][column+1] = color;
-        *display[row][column+1] = color;
-        *display[row+1][column] = color;
-        *display[row+1][column-1] = color;
-        *display[row+2][column-2] = color;
-        *display[row+3][column-2] = color;
-        *display[row+3][column-1] = color;
+        strip.SetPixelColor(mapToStrip(row-1, column), color);
+        strip.SetPixelColor(mapToStrip(row-1, column+1), color);
+        strip.SetPixelColor(mapToStrip(row, column+1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column), color);
+        strip.SetPixelColor(mapToStrip(row+1, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+2, column-2), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-2), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-1), color);
         break;
 
     case 4:
-        *display[row-1][column] = color;
-        *display[row][column-1] = color;
-        *display[row+1][column-1] = color;
-        *display[row+1][column] = color;
-        *display[row][column+1] = color;
-        *display[row-1][column+2] = color;
-        *display[row+2][column] = color;
-        *display[row+3][column-1] = color;
+        strip.SetPixelColor(mapToStrip(row-1, column), color);
+        strip.SetPixelColor(mapToStrip(row, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column), color);
+        strip.SetPixelColor(mapToStrip(row, column+1), color);
+        strip.SetPixelColor(mapToStrip(row-1, column+2), color);
+        strip.SetPixelColor(mapToStrip(row+2, column), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-1), color);
         break;
 
     case 7:
-        *display[row-1][column] = color;
-        *display[row-1][column+1] = color;
-        *display[row][column+1] = color;
-        *display[row+1][column] = color;
-        *display[row+2][column-1] = color;
-        *display[row+3][column-2] = color;
+        strip.SetPixelColor(mapToStrip(row-1, column), color);
+        strip.SetPixelColor(mapToStrip(row-1, column+1), color);
+        strip.SetPixelColor(mapToStrip(row, column+1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column), color);
+        strip.SetPixelColor(mapToStrip(row+2, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-2), color);
         break;
 
     case 9:
-        *display[row][column-1] = color;
+        strip.SetPixelColor(mapToStrip(row, column-1), color);
 
     case 3:
-        *display[row-1][column] = color;
-        *display[row+1][column-1] = color;
-        *display[row+3][column-2] = color;
+        strip.SetPixelColor(mapToStrip(row-1, column), color);
+        strip.SetPixelColor(mapToStrip(row+1, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-2), color);
 
     case 1:
-        *display[row-1][column+1] = color;
-        *display[row][column+1] = color;
-        *display[row+1][column] = color;
-        *display[row+2][column] = color;
-        *display[row+3][column-1] = color;
+        strip.SetPixelColor(mapToStrip(row-1, column+1), color);
+        strip.SetPixelColor(mapToStrip(row, column+1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column), color);
+        strip.SetPixelColor(mapToStrip(row+2, column), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-1), color);
         break;
 
     case 8:
-        *display[row][column+1] = color;
+        strip.SetPixelColor(mapToStrip(row, column+1), color);
 
     case 6:
-        *display[row+2][column-2] = color;
+        strip.SetPixelColor(mapToStrip(row+2, column-2), color);
 
     case 5:
-        *display[row-1][column+1] = color;
-        *display[row-1][column] = color;
-        *display[row][column-1] = color;
-        *display[row+1][column-1] = color;
-        *display[row+1][column] = color;
-        *display[row+2][column] = color;
-        *display[row+3][column-1] = color;
-        *display[row+3][column-2] = color;
+        strip.SetPixelColor(mapToStrip(row-1, column+1), color);
+        strip.SetPixelColor(mapToStrip(row-1, column), color);
+        strip.SetPixelColor(mapToStrip(row, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+1, column), color);
+        strip.SetPixelColor(mapToStrip(row+2, column), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-1), color);
+        strip.SetPixelColor(mapToStrip(row+3, column-2), color);
         break;
 
     default:
         break;
     }
+
+    strip.Show();
 
 }
 
@@ -188,16 +201,9 @@ void writeTime(int hours, int minutes, long color){
     
     // animate blinking dots in the middle
     if(millis()%2000 < 1000){
-        *display[4][10] = color;
-        *display[2][11] = color;
+        strip.SetPixelColor(mapToStrip(4, 10), color);
+        strip.SetPixelColor(mapToStrip(2, 11), color);
     }
-    
-    // check if time has changed since last call
-    // if(lastTimeShown == hours*60+minutes) {
-    //     FastLED.show();
-    //     return;
-    // }
-    // else lastTimeShown = hours*60+minutes;
 
     //write hours
     if(hours>9){
@@ -209,7 +215,7 @@ void writeTime(int hours, int minutes, long color){
     writeDigit((int)(minutes/10), 2, 14, color);
     writeDigit(minutes%10, 2, 18, color);
 
-    FastLED.show();
+    strip.Show();
 
 }
 
@@ -245,31 +251,31 @@ void writeTemp(int temperature, long color){
     //check if temperature is out of range
     if(temperature>100) return;
 
-    *display[1][15] = color;
+    strip.SetPixelColor(mapToStrip(1, 15), color);
 
     writeDigit(temperature%10, 2, 12, color);
     if(temperature > 10){
         writeDigit(temperature/10, 2, 8, color);
         if(tempNegative){
-            *display[3][5] = color;
-            *display[3][4] = color;
+            strip.SetPixelColor(mapToStrip(3, 5), color);
+            strip.SetPixelColor(mapToStrip(3, 4), color);
             return;
         }
     }
 
     if(tempNegative){
-        *display[3][9] = color;
-        *display[3][8] = color;
+        strip.SetPixelColor(mapToStrip(3, 9), color);
+        strip.SetPixelColor(mapToStrip(3, 8), color);
     }
 }
 
 void testAllLeds(){
     for(int i = 0; i<ledQuantity; i++){
-        leds[i] = 0x0000ff;
+        strip.SetPixelColor(i, 0x0000ff);
         delay(40);
     }
     for(int i = 0; i<ledQuantity; i++){
-        leds[i] = 0x000000;
+        strip.SetPixelColor(i, 0x000000);
         delay(40);
     }   
     #if defined(DEBUGGING)
