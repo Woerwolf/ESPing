@@ -18,8 +18,8 @@ extern long colorBG;
 extern long colorFG;
 extern int activeMode;
 extern int activeBackground;
-enum modes {TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
+enum modes {OFFLINE, TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
 enum backgrounds {RAINBOW, STATIC};
 
-void wifiSetup();
+bool wifiSetup();
 void serverSetup();

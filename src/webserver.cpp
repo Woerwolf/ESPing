@@ -8,15 +8,15 @@
 
 #define DEBUGGING 1
 
-
-void wifiSetup(){
+// returns true if no error occured, else false gets returned
+bool wifiSetup(){
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Telnet.println("Connection Failed! Rebooting...");
+        Telnet.println("Connection Failed!");
         delay(5000);
-        ESP.restart();
+        return false;
     }
 
     #if defined(DEBUGGING)
@@ -24,6 +24,8 @@ void wifiSetup(){
     Telnet.print("IP address: ");
     Telnet.println(WiFi.localIP());
     #endif
+
+    return true;
 }
 
 void handleModeRequest(){

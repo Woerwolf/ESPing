@@ -40,12 +40,12 @@
 #pragma region globalVariables
 
 // defined in webserver.h
-// enum modes {TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
+// enum modes {OFFLINE, TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
 // enum backgrounds {RAINBOW, STATIC};
 long colorBG = 0x000000;
-long colorFG = 0xffffff;
-int activeMode = TIME;
-int activeBackground = RAINBOW;
+long colorFG = 0xff0000;
+int activeMode = OFFLINE;
+int activeBackground = STATIC;
 
 Ticker blinkerSeconds;
 
@@ -77,7 +77,7 @@ const char htmlPage[]PROGMEM=R"=====(
   </html>
   )=====";
 
-const String brawlServername = "esping-brawl-api.herokuapp.com";
+const String brawlServername = BRAWLAPISERVER;
 String playerID = "PC2J0V08V";
 // String playerID = "RJGPYVP9";
 // String playerID = "9R8Y820P";
@@ -90,9 +90,9 @@ char* brawlInfoOnServer;
 char const * brawlername = "{";
 char const * identifier = "trophies";
 
-const String weatherServername="api.openweathermap.org";
-const String cityID = "6556348";
-const String  apiKey = "77251286a8b3a2888376d53c4ca3e826";
+const String weatherServername = "api.openweathermap.org";
+const String cityID = CITYID;
+const String  apiKey = WEATHERAPIKEY;
 int32_t lastWeatherQuery = -600;
 String weatherResult = "";
 float temperature;
@@ -123,6 +123,9 @@ void handleTimerInterrupt(){
   }
   
   switch(activeMode){
+    case OFFLINE:
+                animateWifiError(1,8, 0xff0000);
+                break;
     case TIME: 
                 writeTime(timeClient.getHours(), timeClient.getMinutes(), 0xffffff);
                 break;
@@ -140,17 +143,24 @@ void handleTimerInterrupt(){
 }
 
 void setup() {
-  setupOTA();
-  setupTelnet();
+  if(wifiSetup()){
+    serverSetup();
+    setupOTA();
+    setupTelnet();
+
+    activeMode = TIME;
+    activeBackground = RAINBOW;
+    colorFG = 0xffffff;
+
+    timeClient.begin();
+    timeClient.forceUpdate();  
+    lastTimeUpdate = timeClient.getMinutes();
+  }
+  
 
   setupLED();  
 
-  timeClient.begin();
-  timeClient.forceUpdate();  
-  lastTimeUpdate = timeClient.getMinutes();
   
-  wifiSetup();
-  serverSetup();
 
   #if defined(DEBUGGING)
     Telnet.println("Booting");
@@ -184,10 +194,12 @@ void loop() {
                 break;
   }
 
-  handleOTA();
-  handleTelnet();
+  if(activeMode != OFFLINE){
+    handleOTA();
+    handleTelnet();
 
-  server.handleClient();
+    server.handleClient();
+  }
 
   delay(300);
 }

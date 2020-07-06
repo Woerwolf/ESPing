@@ -231,8 +231,6 @@ void writeNumber(unsigned int number, long color){
     if(number>=10000){
         writeDigit(int((number%100000)/10000), 2, 3, color);
     }
-
-    FastLED.show();
 }
 
 void writeTemp(int temperature, long color){
@@ -261,6 +259,33 @@ void writeTemp(int temperature, long color){
         *display[3][9] = color;
         *display[3][8] = color;
     }
+    FastLED.show();
+}
+
+void animateWifiError(int row, int column, long color){
+    int stageOfAnimation = (millis()%3000)/1000;
+    switch(stageOfAnimation){
+        case 2:
+                *display[row+1][column+0] = color;
+                *display[row+0][column+1] = color;
+                *display[row+0][column+2] = color;
+                *display[row+0][column+3] = color;
+                *display[row+0][column+4] = color;
+                *display[row+0][column+5] = color;
+                *display[row+1][column+5] = color;
+        case 1: 
+                *display[row+3][column] = color;
+                *display[row+2][column+1] = color;
+                *display[row+2][column+2] = color;
+                *display[row+2][column+3] = color;
+                *display[row+3][column+3] = color;
+        case 0:
+                *display[row+4][column+1] = color;
+                break;
+        default:
+                break;
+    }
+    FastLED.show();
 }
 
 void testAllLeds(){
