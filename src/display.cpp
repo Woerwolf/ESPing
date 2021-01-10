@@ -7,7 +7,7 @@
 
 
 void setupLED(){
-    LEDS.addLeds<WS2812, dataPin, GRB>(leds,ledQuantity);
+    LEDS.addLeds<WS2811, dataPin, GRB>(leds,ledQuantity);
     // FastLED.setMaxRefreshRate( 10 );
 
 
@@ -209,8 +209,6 @@ void writeTime(int hours, int minutes, long color){
     writeDigit((int)(minutes/10), 2, 14, color);
     writeDigit(minutes%10, 2, 18, color);
 
-    FastLED.show();
-
 }
 
 void writeNumber(unsigned int number, long color){
@@ -234,20 +232,23 @@ void writeNumber(unsigned int number, long color){
 }
 
 void writeTemp(int temperature, long color){
-    bool tempNegative;
-    if(temperature<0){
-        tempNegative = true;
-        temperature = temperature*(-1);
-    }
+    bool tempNegative = false;
+    // absolute value of temperature
+    int absTemp;
+    absTemp = abs(temperature);
+    tempNegative = temperature<0;
 
     //check if temperature is out of range
-    if(temperature>100) return;
+    if(absTemp>100) return;
 
+    // print ° sign
     *display[1][15] = color;
+    *display[2][15] = color;
+    *display[1][16] = color;
 
-    writeDigit(temperature%10, 2, 12, color);
-    if(temperature > 10){
-        writeDigit(temperature/10, 2, 8, color);
+    writeDigit(absTemp%10, 2, 12, color);
+    if(absTemp > 10){
+        writeDigit(absTemp/10, 2, 8, color);
         if(tempNegative){
             *display[3][5] = color;
             *display[3][4] = color;
@@ -259,7 +260,6 @@ void writeTemp(int temperature, long color){
         *display[3][9] = color;
         *display[3][8] = color;
     }
-    FastLED.show();
 }
 
 void animateWifiError(int row, int column, long color){

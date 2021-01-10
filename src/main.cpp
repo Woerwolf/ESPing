@@ -13,25 +13,27 @@
 
 ------------------------------------------------------------------------------*/
 
-// #define DEBUGGING 1
+#define DEBUGGING_ONLINE 1
+#define DEBUGGING_OFFLINE 1
 
 #pragma region include
   #include <Arduino.h>
-  #include <ESP8266WiFi.h>
-  #include <ESP8266mDNS.h>
+  #include <WiFi.h>
+  #include <mDNS.h>
   #include <WiFiUdp.h>
   #include <ArduinoOTA.h>
-  #include <ESP8266WebServer.h>
+  #include <WebServer.h>
   #include <ArduinoJson.h>
-  #include <ESP8266HTTPClient.h>
+  #include <HTTPClient.h>
   #include <NTPClient.h>
   #include <Ticker.h>
 
+  #include "main.h"
   #include "OTA.h"
   #include "weather.h"
   #include "brawl.h"
   #include "util.h"
-  #include "webserver.h"
+  #include "webserver2.h"
   #include "display.h"
   #include "background.h"
   #include "credentials.h"
@@ -39,11 +41,11 @@
 
 #pragma region globalVariables
 
-// defined in webserver.h
-// enum modes {OFFLINE, TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
+// defined in webserver2.h
+// enum modes {OFFLINE, CLEAR, TIME, WEATHER, BRAWLSTARS, SLIDESHOW, SNAKE, PONG};
 // enum backgrounds {RAINBOW, STATIC};
-long colorBG = 0x000000;
-long colorFG = 0xff0000;
+long colorBG;
+long colorFG;
 int activeMode = OFFLINE;
 int activeBackground = STATIC;
 
@@ -56,9 +58,8 @@ CRGB leds[ledQuantity];
 CRGB* display[ledRows][ledColumns];
 int lastTimeShown = -1;
 
-const int utcOffsetInSeconds = 7200;
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
 // last time update at minute:
 int lastTimeUpdate = 0;
 
@@ -77,43 +78,48 @@ const char htmlPage[]PROGMEM=R"=====(
   </html>
   )=====";
 
-const String brawlServername = BRAWLAPISERVER;
+char const * brawlServername = BRAWLAPISERVER;
 String playerID = "PC2J0V08V";
 // String playerID = "RJGPYVP9";
 // String playerID = "9R8Y820P";
-int32_t lastBrawlQuery = -60;
+int32_t lastBrawlQuery = -6000;
 int brawlState = 0; // 0: no connection to api      1: connected      2: requested      3: answer received      4=0: answer parsed/no connection to api
 
 char* brawlResult;
 char* brawlInfoOnServer;
+int brawlInfoOnDisplay = 0;
 
 char const * brawlername = "{";
 char const * identifier = "trophies";
 
-const String weatherServername = "api.openweathermap.org";
+char const * weatherServername = "api.openweathermap.org";
 const String cityID = CITYID;
 const String  apiKey = WEATHERAPIKEY;
 int32_t lastWeatherQuery = -600;
 String weatherResult = "";
-float temperature;
+float temperature = 0;
 
-ESP8266WebServer server;
-WiFiClientSecure brawlClient;
+WebServer server(80);
+WiFiClient brawlClient;
 WiFiClient weatherClient;
 
 WiFiServer telnetServer(23);
 WiFiClient Telnet;
 
-bool ota_flag = true;
+bool ota_flag = false;
 uint16_t time_elapsed = 0;
 
 #pragma endregion globalVariables
 
 void handleTimerInterrupt(){
+  Serial.println("Interupt started!");
   switch(activeBackground){
     case RAINBOW: 
-                  rainbowbg(0.15, 170);
+                  {
+                  int rainbowBrightness = ((colorBG%256)+((colorBG/256)%256)+(colorBG%256%256))/3;
+                  rainbowbg(0.1, rainbowBrightness);
                   break;
+                  }
     case STATIC:
                   staticbg(colorBG);
                   break;
@@ -127,19 +133,23 @@ void handleTimerInterrupt(){
                 animateWifiError(1,8, 0xff0000);
                 break;
     case TIME: 
-                writeTime(timeClient.getHours(), timeClient.getMinutes(), 0xffffff);
+                writeTime(timeClient.getHours(), timeClient.getMinutes(), colorFG);
+                FastLED.show();
                 break;
     case WEATHER:
-                writeTemp(temperature, 0xffffff);
+                writeTemp(temperature, colorFG);
+                FastLED.show();
                 break;
     case BRAWLSTARS:
                 if(brawlResult == NULL) break;
-                writeNumber(atoi(getComponentFromJson(brawlResult, "trophies", "{")), 0xffffff);
+                writeNumber(brawlInfoOnDisplay, colorFG);
+                FastLED.show();
                 break;
     default:
+                FastLED.show();
                 break;
   }
-
+  Serial.println("Interupt done!");
 }
 
 void setup() {
@@ -148,35 +158,40 @@ void setup() {
     setupOTA();
     setupTelnet();
 
-    activeMode = TIME;
+    Serial.begin(115200);
+
+    activeMode = CLEAR;
     activeBackground = RAINBOW;
     colorFG = 0xffffff;
+    colorBG = 0x999999;
+
 
     timeClient.begin();
     timeClient.forceUpdate();  
     lastTimeUpdate = timeClient.getMinutes();
+    // char* formattedDate = &timeClient.getFormattedDate()[0];
+    // char* date = strtok(formattedDate, "T");
+    // int day = atoi(strtok(date, "-"));
+    // int month = atoi(strtok(NULL, "-"));
+    // int year = atoi(strtok(NULL, "-"));
+    // if((month>3 && month<10) || (month==3 && day+7-(1+getWeekday(day, month, year)%7)>31 || month==10) && (day+7-(getWeekday(day, month, year)%7)<31)) {
+      timeClient.setTimeOffset(7200);
+    // }
+    // else {
+    //   timeClient.setTimeOffset(3600);
+    // }
   }
   
 
   setupLED();  
 
-  
+  FastLED.showColor(0x00ff00);
 
-  #if defined(DEBUGGING)
-    Telnet.println("Booting");
-  #endif
-
-
-  blinkerSeconds.attach(0.07, handleTimerInterrupt);
+  blinkerSeconds.attach(0.02, handleTimerInterrupt);
 }
 
 void loop() {
-
-  
-  #if defined(DEBUGGING)
-  Telnet.println("loop");
-  #endif
-
+  Serial.println("Loop started!");
   switch(activeMode){
     case TIME: 
                 if((timeClient.getMinutes()+60 - lastTimeUpdate)%60 > 10){
@@ -201,5 +216,25 @@ void loop() {
     server.handleClient();
   }
 
-  delay(300);
+  
+  delay(10);
+  Serial.println("Loop done!");
+}
+
+void myPrintln(const char* toPrint){
+  #if defined(DEBUGGING_ONLINE)
+  Telnet.println(toPrint);
+  #endif
+  #if defined(DEBUGGING_OFFLINE)
+  Serial.println(toPrint);
+  #endif
+}
+
+void myPrint(const char* toPrint){
+  #if defined(DEBUGGING_ONLINE)
+  Telnet.print(toPrint);
+  #endif
+  #if defined(DEBUGGING_OFFLINE)
+  Serial.print(toPrint);
+  #endif
 }

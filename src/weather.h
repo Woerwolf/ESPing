@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include <ESP8266HTTPClient.h>
+#include <HTTPClient.h>
 
-extern const String weatherServername;
+extern char const * weatherServername;
 extern const String cityID;
 extern const String apiKey;
 extern int32_t lastWeatherQuery;

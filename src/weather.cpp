@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-// #define DEBUGGING 1
+#define DEBUGGING 1
 
 
 bool handleWeatherData(){
@@ -15,7 +15,7 @@ bool handleWeatherData(){
         return true;
     }
     return false;
-    }
+}
 
 void updateWeatherData(){
     if (weatherClient.connect(weatherServername, 80)) {  //starts client connection, checks for connection
@@ -60,4 +60,6 @@ void updateWeatherData(){
     
     float read_temperature = root["main"]["temp"];
     temperature = read_temperature;
+    Telnet.println("temperature:   ");
+    Telnet.println(temperature);
 }

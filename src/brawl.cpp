@@ -1,9 +1,11 @@
 #include "brawl.h"
 
+#include "main.h"
 #include "util.h"
 #include "OTA.h"
-#include "webserver.h"
+#include "webserver2.h"
 #include <Arduino.h>
+#include <HTTPClient.h>
 
 #define DEBUGGING 1
 
@@ -16,10 +18,8 @@ void changeBrawlInfo(){
   server.arg("myText").toCharArray(notice, noticeLength);
   notice[noticeLength] = '\0';
   
-  #if defined(DEBUGGING)
-  Telnet.println("Text Received, contents:");
-  Telnet.println(notice);
-  #endif
+  myPrintln("Text Received, contents:");
+  myPrintln(notice);
 
   free(notice);
   server.send(200,"text/html",webPage);  
@@ -57,16 +57,15 @@ bool handleBrawlData(){
 }
 
 void brawlConnectServer(){
-  #if defined(DEBUGGING)
-  Telnet.println("\n[Connecting to " + brawlServername);
-  #endif
+  myPrint("\n[Connecting to ");
+  myPrintln(brawlServername);
 
-  //  const char fingerprint[] = "5C 67 CF 09 6C 0F AE 2B CE D4 29 73 F3 FC 01 23 A7 58 84 43";
-  //  brawlClient.setFingerprint(fingerprint);
-  brawlClient.setInsecure();
-    
-  brawlClient.connect(brawlServername, 443);  //starts client connection, checks for connection
+  // brawlClient.setInsecure()
+
+  // brawlClient.connect(brawlServername, 443);  //starts client connection, checks for connection
   
+  // while(!brawlClient.connected()) delay(10);
+
   #if defined(DEBUGGING)
   Telnet.println("connected]");
   #endif
@@ -77,49 +76,85 @@ void brawlSendRequest(){
   Telnet.println("[Sending a request]");
   #endif
   
-  brawlClient.print(String("GET /brawl/players/") + playerID + " HTTP/1.1\r\n" +
-      "Host: " + brawlServername + "\r\n" +
-      "Connection: close\r\n" +
-      "\r\n"
-      );
+  // brawlClient.print(String("GET /brawl/players/") + playerID + " HTTP/1.1\r\n" +
+      // "Host: " + brawlServername + "\r\n" +
+  //     "Connection: close\r\n" +
+  //     "\r\n"
+  //     );
 
+}
+
+
+String httpGETRequest(const char* serverName) {
+  HTTPClient http;
+    
+  // Your IP address with path or Domain name with URL path 
+  http.begin(serverName);
+  
+  // Send HTTP POST request
+  int httpResponseCode = http.GET();
+  
+  String payload = "{}"; 
+  
+  if (httpResponseCode>0) {
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    payload = http.getString();
+  }
+  else {
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
+  }
+  // Free resources
+  http.end();
+
+  return payload;
 }
 
 void brawlListenForResponse(){
   #if defined(DEBUGGING)
   Telnet.println("[Response:]");
   #endif
+  
+  // while (brawlClient.connected()) {
+  //   readResult = brawlClient.readStringUntil('\n');
+    
+  //   Telnet.println(readResult);
 
-  String readResult;
-  while (brawlClient.connected()) {
-    readResult = brawlClient.readStringUntil('\n');
-    if (readResult == "\r") {
-      #if defined(DEBUGGING)
-      Telnet.println("headers received");
-      #endif
-      break;
-    }
-  }
-  readResult = brawlClient.readStringUntil('\n');
-  if(brawlResult){
+  //   if (readResult == "\r") {
+  //     #if defined(DEBUGGING)
+  //     Telnet.println("headers received");
+  //     #endif
+  //     break;
+  //   }
+
+  // }
+  const char* servername = "https://esping-brawl-api.herokuapp.com/brawl/players/PC2J0V08V";
+  String readResult = httpGETRequest(servername);
+
+  Telnet.println(readResult);
+
+  // readResult = brawlClient.readStringUntil('\n');
+  if(brawlResult != NULL){
     free(brawlResult);
   }
   brawlResult = (char *) malloc((readResult.length()+1) * sizeof(char));
-  readResult.toCharArray(brawlResult, readResult.length());
+  readResult.toCharArray(brawlResult, readResult.length()+1);
   //    brawlResult[readResult.length()+1] = '\0';
-
   #if defined(DEBUGGING)
   Telnet.println(brawlResult);
   #endif
 
-  brawlClient.stop(); //stop client
+  // brawlClient.stop(); //stop client
 }
+
+
 
 void brawlParseJson(){
 
-    char* jsonPart = partOfString(brawlResult, 50, 200);
-    free(brawlInfoOnServer);
+    char* jsonPart = partOfString(brawlResult, 50, 300);
     brawlInfoOnServer = getComponentFromJson(brawlResult, identifier, brawlername);
-    free(jsonPart);
-
+    brawlInfoOnDisplay = atoi(brawlInfoOnServer);
+    Telnet.println(brawlInfoOnServer);
+    Telnet.println("parsed!");
 }

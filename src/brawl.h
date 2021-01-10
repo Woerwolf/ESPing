@@ -1,15 +1,17 @@
 #include <Arduino.h>
-#include <ESP8266mDNS.h>
+#include <mDNS.h>
+#include <HTTPClient.h>
 
-extern const String brawlServername;
+extern char const * brawlServername;
 extern String playerID;
 extern int32_t lastBrawlQuery;
 extern int brawlState;
 extern char* brawlResult;
 extern char* brawlInfoOnServer;
+extern int brawlInfoOnDisplay;
 extern char const * brawlername;
 extern char const * identifier;
-extern WiFiClientSecure brawlClient;
+extern WiFiClient brawlClient;
 
 extern const char* webPage;
 extern char* notice;

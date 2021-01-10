@@ -1,17 +1,20 @@
-#include "webserver.h"
+#include "webserver2.h"
 
+#include "main.h"
+#include "weather.h"
+#include "credentials.h"
 #include "OTA.h"
 #include "brawl.h"
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
+#include <WiFi.h>
+#include <WebServer.h>
 
 #define DEBUGGING 1
 
 // returns true if no error occured, else false gets returned
 bool wifiSetup(){
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+    WiFi.begin(SSID, PW);
 
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
         Telnet.println("Connection Failed!");
@@ -22,7 +25,7 @@ bool wifiSetup(){
     #if defined(DEBUGGING)
     Telnet.println("Ready");
     Telnet.print("IP address: ");
-    Telnet.println(WiFi.localIP());
+    Serial.println(WiFi.localIP());
     #endif
 
     return true;
@@ -33,11 +36,13 @@ void handleModeRequest(){
         if(server.header("Mode").equals("time")){
             activeMode = TIME;
         }
-        if(server.header("Mode").equals("brawl")){
+        else if(server.header("Mode").equals("brawl")){
             activeMode = BRAWLSTARS;
         }
-        if(server.header("Mode").equals("weather")){
+        else if(server.header("Mode").equals("weather")){
             activeMode = WEATHER;
+        }else{
+            activeMode = CLEAR;
         }
     }
 
@@ -45,21 +50,27 @@ void handleModeRequest(){
         if(server.header("Background").equals("rainbow")){
             activeBackground = RAINBOW;
         }
-        if(server.header("Background").equals("static")){
+        else if(server.header("Background").equals("static")){
             activeBackground = STATIC;
         }
     }
 
     if (server.hasHeader("ColorBG")){
-        char colorCharArray[6];
-        server.header("ColorBG").toCharArray(colorCharArray, 6);
+        char colorCharArray[7];
+        colorCharArray[6] = '\0';
+        server.header("ColorBG").toCharArray(colorCharArray, 7);
+        myPrintln(colorCharArray);
         colorBG = strtol(colorCharArray, NULL, 16);
+        Telnet.print(colorBG);
     }
 
     if (server.hasHeader("ColorFG")){
-        char colorCharArray[6];
-        server.header("ColorFG").toCharArray(colorCharArray, 6);
-        colorBG = strtol(colorCharArray, NULL, 16);
+        char colorCharArray[7];
+        colorCharArray[6] = '\0';
+        server.header("ColorFG").toCharArray(colorCharArray, 7);
+        myPrintln(colorCharArray);
+        colorFG = strtol(colorCharArray, NULL, 16);
+        Telnet.print(colorFG);
     }
 
     server.send(200,"text/plain", "Mode request received!");
